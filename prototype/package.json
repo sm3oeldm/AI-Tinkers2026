@@ -1,0 +1,14 @@
+{
+  "name": "course-companion-prototype",
+  "version": "1.0.0",
+  "description": "Course Companion — Physics I-61D prototype server (static pages + live transcription proxy).",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "ws": "^8.21.3"
+  }
+}

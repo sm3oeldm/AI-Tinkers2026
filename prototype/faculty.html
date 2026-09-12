@@ -1,0 +1,662 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Physics I-61D | Faculty — Course Companion</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<div class="utility-bar">
+  <div class="brand">
+    <span>AAU Moodle</span>
+    <span class="cc-badge">Course Companion</span>
+  </div>
+  <div class="user-chip">
+    <a href="student.html" class="hint" style="margin-right:10px;">Student view →</a>
+    <span class="user-pill">👤 Dr. Armagan Elibol</span>
+  </div>
+</div>
+
+<div class="title-bar">
+  <span class="crumbs">Dashboard / My courses / <strong>PHYS-I-61D</strong> / Faculty tools</span>
+</div>
+<div class="course-hero">
+  <h1>Physics I-61D — Faculty view</h1>
+  <div>
+    <a class="pill-btn" href="#">Dashboard</a>
+    <a class="pill-btn" href="#">Site home</a>
+    <button class="pill-btn ghost" id="open-dashboard-btn">⚙ Course dashboard</button>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="side">
+    <div class="block">
+      <div class="block-head">Navigation</div>
+      <div class="block-body">
+        <ul>
+          <li><a href="#">Dashboard</a></li>
+          <li><a href="#">Participants</a></li>
+          <li class="current"><span>Physics I-61D</span>
+            <ul class="sub"><li><a href="#grades-section">Grades</a></li></ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="block">
+      <div class="block-head">Reliability demo</div>
+      <div class="block-body">
+        <label><input type="checkbox" id="outage-toggle" /> Simulate Ambiguous AI outage</label>
+        <div class="hint">When on, newly accepted student study tasks stay "pending sync" instead of getting a fabricated provider ID.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- Lecture controls -->
+    <div class="week-section">
+      <div class="week-head" data-toggle-section="sec-general"><span>General</span><span class="chev">▾ Collapse</span></div>
+      <ul class="activity-list" id="sec-general">
+        <li class="activity-row">
+          <div class="activity-icon lecture">🎙</div>
+          <div class="activity-body">
+            <div class="activity-name" data-toggle-panel="lecture-panel">Live Lecture <span id="lecture-status-badge" class="status-badge idle">idle</span></div>
+            <div class="activity-meta" id="lecture-meta"></div>
+
+            <div class="activity-panel" id="lecture-panel">
+              <div class="field-row">
+                <div>
+                  <label class="field-label">Lecture title</label>
+                  <input type="text" id="lecture-title" placeholder="e.g. Newton's Laws — Net Force" />
+                </div>
+                <div>
+                  <label class="field-label">Session controls</label>
+                  <button class="btn btn-primary" id="start-btn">Start lecture</button>
+                  <button class="btn btn-danger" id="stop-btn" disabled>Stop &amp; archive</button>
+                </div>
+              </div>
+
+              <hr class="divider" />
+
+              <label class="field-label">Microphone transcription</label>
+              <div>
+                <button class="btn btn-primary" id="record-btn" disabled>🎙 Start recording</button>
+                <button class="btn btn-danger" id="stop-record-btn" disabled>⏹ Stop recording</button>
+                <button class="btn btn-secondary btn-sm" id="insert-example-btn">Insert example segment</button>
+              </div>
+              <div class="transcribe-status" id="transcribe-status">Not recording.</div>
+
+              <label class="field-label" style="margin-top:10px;">Transcript</label>
+              <div id="transcript-title" class="transcript-title"></div>
+              <div id="partial-transcript" class="partial-text" hidden></div>
+              <div class="transcript-log" id="transcript-log"></div>
+
+              <label class="field-label" style="margin-top:10px;">Lecture archive</label>
+              <ul class="activity-list" id="lecture-archive"></ul>
+            </div>
+          </div>
+        </li>
+
+        <li class="activity-row">
+          <div class="activity-icon resource">📤</div>
+          <div class="activity-body">
+            <div class="activity-name" data-toggle-panel="materials-panel">Course materials</div>
+            <div class="activity-meta">Slides and past exams available to the drafting and retrieval tools.</div>
+            <div class="activity-panel" id="materials-panel">
+              <table class="rubric-table">
+                <thead><tr><th>Material</th><th>Concept</th><th>Visibility</th></tr></thead>
+                <tbody id="materials-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Assessment drafting -->
+    <div class="week-section">
+      <div class="week-head" data-toggle-section="sec-assign"><span>Assignments</span><span class="chev">▾ Collapse</span></div>
+      <ul class="activity-list" id="sec-assign">
+        <li class="activity-row">
+          <div class="activity-icon quiz">📝</div>
+          <div class="activity-body">
+            <div class="activity-name" data-toggle-panel="draft-panel">Draft assessment <span id="assessment-status-badge" class="status-badge draft">none</span></div>
+            <div class="activity-meta">Generated from slides and past exams, in the number of questions you choose below.</div>
+            <div class="activity-panel" id="draft-panel">
+              <div class="field-row">
+                <div>
+                  <label class="field-label">Topics</label>
+                  <input type="text" id="bp-topics" value="Net force, velocity vs acceleration" />
+                </div>
+                <div>
+                  <label class="field-label">Total marks (target)</label>
+                  <input type="number" id="bp-marks" value="8" />
+                </div>
+                <div>
+                  <label class="field-label">Number of questions</label>
+                  <input type="text" inputmode="numeric" pattern="[0-9]*" id="bp-length" value="3" />
+                </div>
+              </div>
+              <div style="margin-top:8px;">
+                <button class="btn btn-primary" id="draft-btn">Generate draft</button>
+              </div>
+
+              <div id="draft-area" style="margin-top:12px;"></div>
+            </div>
+          </div>
+        </li>
+
+        <li class="activity-row">
+          <div class="activity-icon assign">✍</div>
+          <div class="activity-body">
+            <div class="activity-name">Practice: Constant Velocity — Short Answer</div>
+            <div class="activity-meta">
+              Provisional feedback visibility to students:
+              <label><input type="checkbox" id="feedback-visible-toggle" /> visible to students</label>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Discussion topics -->
+    <div class="week-section">
+      <div class="week-head" data-toggle-section="sec-topics"><span>Discussion preparation topics</span><span class="chev">▾ Collapse</span></div>
+      <ul class="activity-list" id="sec-topics">
+        <li class="activity-row">
+          <div class="activity-icon resource">💬</div>
+          <div class="activity-body">
+            <div class="activity-name" data-toggle-panel="topics-panel">Preparation topics <span id="discussion-status-badge" class="status-badge draft">none</span></div>
+            <div class="activity-panel" id="topics-panel">
+              <div class="tabs" id="specificity-tabs">
+                <button class="tab-btn active" data-level="broad">Broad Topics</button>
+                <button class="tab-btn" data-level="recommended">Recommended Topics</button>
+                <button class="tab-btn" data-level="narrow">Narrow Topics</button>
+              </div>
+              <div class="hint">Broad = general subject areas. Recommended = learning objectives to focus study on. Narrow = exactly what will appear on the assessment.</div>
+              <button class="btn btn-secondary" id="gen-topics-btn">Generate for this level</button>
+              <div id="topics-editor" style="margin-top:10px;"></div>
+              <div style="margin-top:8px;">
+                <button class="btn btn-success" id="publish-topics-btn">Publish this level</button>
+              </div>
+              <div class="hint" style="margin-top:6px;">Published levels: <span id="published-levels">none</span></div>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Grades -->
+    <div class="week-section" id="grades-section">
+      <div class="week-head" data-toggle-section="sec-grades"><span>Grades</span><span class="chev">▾ Collapse</span></div>
+      <ul class="activity-list" id="sec-grades">
+        <li class="activity-row">
+          <div class="activity-icon assign">📊</div>
+          <div class="activity-body">
+            <div class="activity-name">Gradebook overview</div>
+            <div class="activity-meta">Class-level AI-grading statistics per assessment.</div>
+            <div class="activity-panel">
+              <table class="rubric-table" id="gradebook-table">
+                <thead><tr><th>Assessment</th><th>Average (AI grading)</th><th>10th percentile</th><th>90th percentile</th><th>Manual review</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </li>
+        <li class="activity-row">
+          <div class="activity-icon assign">✅</div>
+          <div class="activity-body">
+            <div class="activity-name">Suggested-score review — Constant Velocity practice</div>
+            <div class="activity-panel">
+              <table class="review-table" id="review-table">
+                <thead><tr><th>Student</th><th>Answer</th><th>Rubric evidence</th><th>Suggested</th><th>Decision</th></tr></thead>
+                <tbody></tbody>
+              </table>
+              <div class="hint" id="no-submissions-hint"></div>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<!-- Course dashboard slide-in panel -->
+<div class="side-panel-backdrop" id="dashboard-backdrop" hidden>
+  <div class="side-panel">
+    <button class="close-panel" id="close-dashboard-btn">×</button>
+    <h2>Course dashboard</h2>
+    <div class="block">
+      <div class="block-head">Assessment &amp; topics status</div>
+      <div class="block-body">
+        <div>Assessment: <span id="side-assessment-status" class="status-badge draft">none</span></div>
+        <div style="margin-top:6px;">Discussion topics: <span id="side-discussion-status" class="status-badge draft">none</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-backdrop" hidden>
+  <div class="modal">
+    <h3 id="modal-title">Source</h3>
+    <div id="modal-body"></div>
+    <div style="margin-top:14px; text-align:right;">
+      <button class="btn btn-secondary" id="modal-close">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="campus-footer">
+  <div class="cols">
+    <div><strong>AL AIN CAMPUS</strong><br/>P.O.Box: 64141 Al Ain, UAE</div>
+    <div><strong>ABU DHABI CAMPUS</strong><br/>P.O.Box: 112612 Abu Dhabi, UAE</div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+let db = loadDB();
+let currentLevel = "broad";
+
+function refresh() {
+  db = loadDB();
+  render();
+}
+
+function render() {
+  renderLecture();
+  renderMaterials();
+  renderAssessment();
+  renderDiscussion();
+  renderGradebook();
+  renderReview();
+  document.getElementById("feedback-visible-toggle").checked = db.practiceActivity.feedbackVisible;
+  document.getElementById("outage-toggle").checked = db.ambiguousOutage;
+}
+
+// ---- Section / panel toggling ----
+document.querySelectorAll("[data-toggle-section]").forEach((head) => {
+  head.addEventListener("click", () => {
+    const list = document.getElementById(head.dataset.toggleSection);
+    list.hidden = !list.hidden;
+    head.querySelector(".chev").textContent = list.hidden ? "▸ Expand" : "▾ Collapse";
+  });
+});
+document.querySelectorAll("[data-toggle-panel]").forEach((el) => {
+  el.addEventListener("click", () => {
+    const panel = document.getElementById(el.dataset.togglePanel);
+    if (panel) panel.hidden = !panel.hidden;
+  });
+});
+
+document.getElementById("open-dashboard-btn").addEventListener("click", () => { document.getElementById("dashboard-backdrop").hidden = false; });
+document.getElementById("close-dashboard-btn").addEventListener("click", () => { document.getElementById("dashboard-backdrop").hidden = true; });
+document.getElementById("dashboard-backdrop").addEventListener("click", (e) => { if (e.target.id === "dashboard-backdrop") document.getElementById("dashboard-backdrop").hidden = true; });
+
+// ---- Lecture (dated automatically, titled by faculty) ----
+function renderLecture() {
+  const lecture = getCurrentLecture(db);
+  const badge = document.getElementById("lecture-status-badge");
+  const status = lecture ? lecture.status : "idle";
+  badge.textContent = status;
+  badge.className = "status-badge " + (status === "live" ? "live" : status === "archived" ? "archived" : "idle");
+
+  document.getElementById("lecture-meta").innerHTML = lecture
+    ? `${status === "live" ? '<span class="recording-dot"></span>' : ""}${escapeHtml(lectureLabel(lecture))} — ${status === "live" ? "recording" : "archived"}`
+    : "No lecture started yet.";
+
+  document.getElementById("start-btn").disabled = !!(lecture && lecture.status === "live");
+  document.getElementById("stop-btn").disabled = !(lecture && lecture.status === "live");
+  document.getElementById("record-btn").disabled = !(lecture && lecture.status === "live") || recording;
+  document.getElementById("insert-example-btn").disabled = !(lecture && lecture.status === "live");
+
+  document.getElementById("transcript-title").innerHTML = lecture
+    ? escapeHtml(lectureLabel(lecture))
+    : `<span class="placeholder-tag">Example</span>${escapeHtml(EXAMPLE_LECTURE_TITLE)}`;
+
+  const log = document.getElementById("transcript-log");
+  log.innerHTML = lecture && lecture.segments.length
+    ? lecture.segments.map((seg) => `<div class="transcript-seg"><span class="seg-time">@${seg.offset}</span>${escapeHtml(seg.text)}</div>`).join("")
+    : `<div class="placeholder-example">${EXAMPLE_TRANSCRIPT_SEGMENTS.map((seg, i) => `<div class="transcript-seg">${i === 0 ? '<span class="placeholder-tag">Example</span>' : ""}<span class="seg-time">@${seg.offset}</span>${escapeHtml(seg.text)}</div>`).join("")}</div>`;
+  log.scrollTop = log.scrollHeight;
+
+  const archiveList = document.getElementById("lecture-archive");
+  archiveList.innerHTML = db.lectures
+    .slice()
+    .reverse()
+    .map(
+      (l) => `<li class="activity-row">
+        <div class="activity-icon resource">🗂</div>
+        <div class="activity-body">
+          <div class="activity-name"><a href="#" class="open-lecture" data-id="${l.id}">${escapeHtml(lectureLabel(l))}</a> <span class="status-badge ${l.status === "live" ? "live" : "archived"}">${l.status}</span></div>
+          <div class="activity-meta">${l.segments.length} finalized segment(s)</div>
+        </div>
+      </li>`
+    )
+    .join("") ||
+    `<li class="activity-row placeholder-example">
+      <div class="activity-icon resource">🗂</div>
+      <div class="activity-body">
+        <div class="activity-name"><span class="placeholder-tag">Example</span>Sep 5, 2026 — Newton's Laws — Net Force</div>
+        <div class="activity-meta">14 finalized segment(s)</div>
+      </div>
+    </li>`;
+  archiveList.querySelectorAll(".open-lecture").forEach((a) => {
+    a.addEventListener("click", (e) => { e.preventDefault(); openSourceModal("lecture", a.dataset.id); });
+  });
+}
+
+document.getElementById("start-btn").addEventListener("click", () => {
+  const titleInput = document.getElementById("lecture-title");
+  startLecture(db, titleInput.value);
+  titleInput.value = "";
+  refresh();
+});
+document.getElementById("stop-btn").addEventListener("click", () => {
+  stopRecording();
+  stopLecture(db);
+  refresh();
+});
+document.getElementById("insert-example-btn").addEventListener("click", () => {
+  addUtterance(db, "At constant velocity the acceleration is zero, so by Newton's Second Law the net force is zero — the forces acting on the object still balance.");
+  refresh();
+});
+
+// ---- Real microphone transcription (Gemini Live API via server.js proxy) ----
+let audioCtx = null, micStream = null, processor = null, transcribeSocket = null, recording = false;
+
+function setTranscribeStatus(text) {
+  document.getElementById("transcribe-status").textContent = text;
+}
+function setPartialTranscript(text) {
+  const el = document.getElementById("partial-transcript");
+  el.textContent = text;
+  el.hidden = !text;
+}
+function floatTo16BitPCM(float32Array) {
+  const out = new Int16Array(float32Array.length);
+  for (let i = 0; i < float32Array.length; i++) {
+    const s = Math.max(-1, Math.min(1, float32Array[i]));
+    out[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+  }
+  return out;
+}
+function arrayBufferToBase64(buffer) {
+  let binary = "";
+  const bytes = new Uint8Array(buffer);
+  for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary);
+}
+
+async function startRecording() {
+  const lecture = getCurrentLecture(db);
+  if (!lecture || lecture.status !== "live") return;
+
+  try {
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch (e) {
+    setTranscribeStatus("Microphone permission denied: " + e.message);
+    return;
+  }
+
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+  const source = audioCtx.createMediaStreamSource(micStream);
+  processor = audioCtx.createScriptProcessor(4096, 1, 1);
+  source.connect(processor);
+  processor.connect(audioCtx.destination);
+
+  const wsUrl = (location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws/transcribe";
+  transcribeSocket = new WebSocket(wsUrl);
+
+  transcribeSocket.onopen = () => {
+    transcribeSocket.send(JSON.stringify({ type: "start" }));
+    recording = true;
+    setTranscribeStatus("Connecting to transcription service…");
+    updateRecordButtons();
+  };
+  transcribeSocket.onmessage = (evt) => {
+    const msg = JSON.parse(evt.data);
+    if (msg.type === "status") setTranscribeStatus(msg.message === "connected" ? "Recording…" : "Stopped.");
+    if (msg.type === "partial") setPartialTranscript(msg.text);
+    if (msg.type === "segment") {
+      setPartialTranscript("");
+      addUtterance(db, msg.text);
+      refresh();
+    }
+    if (msg.type === "error") setTranscribeStatus("⚠ " + msg.message);
+  };
+  transcribeSocket.onclose = () => { recording = false; updateRecordButtons(); };
+  transcribeSocket.onerror = () => { setTranscribeStatus("⚠ Connection to transcription server failed."); };
+
+  processor.onaudioprocess = (e) => {
+    if (!recording || !transcribeSocket || transcribeSocket.readyState !== WebSocket.OPEN) return;
+    const input = e.inputBuffer.getChannelData(0);
+    const pcm16 = floatTo16BitPCM(input);
+    transcribeSocket.send(JSON.stringify({ type: "audio", data: arrayBufferToBase64(pcm16.buffer) }));
+  };
+}
+
+function stopRecording() {
+  recording = false;
+  if (transcribeSocket) { try { transcribeSocket.send(JSON.stringify({ type: "stop" })); transcribeSocket.close(); } catch (e) {} }
+  if (processor) { try { processor.disconnect(); } catch (e) {} }
+  if (audioCtx) { try { audioCtx.close(); } catch (e) {} }
+  if (micStream) micStream.getTracks().forEach((t) => t.stop());
+  setPartialTranscript("");
+  setTranscribeStatus("Not recording.");
+  updateRecordButtons();
+}
+
+function updateRecordButtons() {
+  const lecture = getCurrentLecture(db);
+  document.getElementById("record-btn").disabled = recording || !(lecture && lecture.status === "live");
+  document.getElementById("stop-record-btn").disabled = !recording;
+}
+
+document.getElementById("record-btn").addEventListener("click", startRecording);
+document.getElementById("stop-record-btn").addEventListener("click", stopRecording);
+
+// ---- Materials ----
+function renderMaterials() {
+  const body = document.getElementById("materials-body");
+  const rows = db.slides
+    .map((s) => `<tr><td>${escapeHtml(s.title)}</td><td>${s.concept || "—"}</td><td><span class="status-badge published">visible to students</span></td></tr>`)
+    .join("") +
+    db.pastExams
+      .map((e) => `<tr><td>${escapeHtml(e.title)}</td><td>—</td><td><span class="status-badge ${e.released ? "published" : "draft"}">${e.released ? "released past paper" : "faculty-only draft"}</span></td></tr>`)
+      .join("");
+  body.innerHTML = rows;
+}
+
+// ---- Assessment drafting ----
+document.getElementById("draft-btn").addEventListener("click", () => {
+  const blueprint = {
+    topics: document.getElementById("bp-topics").value,
+    totalMarks: Number(document.getElementById("bp-marks").value),
+    numQuestions: Number(document.getElementById("bp-length").value) || 3,
+  };
+  draftAssessment(db, blueprint);
+  refresh();
+});
+
+function renderAssessment() {
+  const badge = document.getElementById("assessment-status-badge");
+  badge.textContent = db.assessment.status;
+  badge.className = "status-badge " + (db.assessment.status === "published" ? "published" : db.assessment.status === "draft" ? "draft" : "idle");
+  document.getElementById("side-assessment-status").textContent = db.assessment.status;
+  document.getElementById("side-assessment-status").className = badge.className;
+
+  const area = document.getElementById("draft-area");
+  if (document.activeElement && area.contains(document.activeElement)) return;
+  if (db.assessment.status === "none") { area.innerHTML = ""; return; }
+  area.innerHTML = `
+    ${db.assessment.questions
+      .map(
+        (q, i) => `
+      <div class="study-card" style="margin-top:8px;">
+        <strong>Q${i + 1} — ${q.type === "mcq" ? "Multiple choice" : "Short written"}</strong>
+        (<input type="number" style="width:60px; display:inline-block;" value="${q.marks}" data-marks="${q.id}" /> marks)
+        <div style="margin-top:6px;"><textarea data-prompt="${q.id}">${escapeHtml(q.prompt)}</textarea></div>
+        ${
+          q.type === "mcq"
+            ? `<div class="hint">Options: ${q.options.map((o, idx) => `${String.fromCharCode(65 + idx)}) ${escapeHtml(o)}`).join(" &nbsp; ")}<br/>Correct: ${String.fromCharCode(65 + q.correctIndex)}</div>`
+            : `<div class="hint">Expected answer (faculty-only): ${escapeHtml(q.expectedAnswer)}</div>`
+        }
+        <div style="margin-top:4px;">${q.sourceRefs.map((s) => `<span class="source-chip" data-kind="${s.kind}" data-id="${s.id}">${escapeHtml(s.label)}</span>`).join("")}</div>
+      </div>`
+      )
+      .join("")}
+    <div style="margin-top:10px;">
+      <button class="btn btn-secondary" id="save-draft-btn">Save draft</button>
+      <button class="btn btn-success" id="publish-assess-btn">Publish assessment</button>
+    </div>`;
+
+  area.querySelectorAll("[data-prompt]").forEach((el) => el.addEventListener("change", () => updateAssessmentQuestion(db, el.dataset.prompt, { prompt: el.value })));
+  area.querySelectorAll("[data-marks]").forEach((el) => el.addEventListener("change", () => updateAssessmentQuestion(db, el.dataset.marks, { marks: Number(el.value) })));
+  const saveBtn = document.getElementById("save-draft-btn");
+  if (saveBtn) saveBtn.addEventListener("click", () => refresh());
+  const pubBtn = document.getElementById("publish-assess-btn");
+  if (pubBtn) pubBtn.addEventListener("click", () => { publishAssessment(db); refresh(); });
+
+  area.querySelectorAll(".source-chip").forEach((chip) => chip.addEventListener("click", () => openSourceModal(chip.dataset.kind, chip.dataset.id)));
+}
+
+// ---- Discussion topics ----
+document.querySelectorAll(".tab-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+    currentLevel = btn.dataset.level;
+    renderDiscussion();
+  });
+});
+document.getElementById("gen-topics-btn").addEventListener("click", () => { draftDiscussionTopics(db, currentLevel); refresh(); });
+document.getElementById("publish-topics-btn").addEventListener("click", () => { publishDiscussionTopics(db, currentLevel); refresh(); });
+
+const LEVEL_LABELS = { broad: "Broad Topics", recommended: "Recommended Topics", narrow: "Narrow Topics" };
+
+function renderDiscussion() {
+  const badge = document.getElementById("discussion-status-badge");
+  badge.textContent = db.discussion.status;
+  badge.className = "status-badge " + (db.discussion.status === "published" ? "published" : db.discussion.status === "draft" ? "draft" : "idle");
+  document.getElementById("side-discussion-status").textContent = db.discussion.status;
+  document.getElementById("side-discussion-status").className = badge.className;
+  document.getElementById("published-levels").textContent = db.discussion.publishedLevels.length
+    ? db.discussion.publishedLevels.map((l) => LEVEL_LABELS[l]).join(", ")
+    : "none";
+
+  const editor = document.getElementById("topics-editor");
+  if (document.activeElement && editor.contains(document.activeElement)) return;
+  const topics = db.discussion.topics[currentLevel] || [];
+  editor.innerHTML = topics.length
+    ? `<ul>${topics.map((t, i) => `<li style="padding:2px 0;"><input type="text" value="${escapeHtml(t)}" data-topic-idx="${i}" style="width:90%;" /></li>`).join("")}</ul>`
+    : `<div class="placeholder-example"><span class="placeholder-tag">Example</span>${escapeHtml(DISCUSSION_TEMPLATES[currentLevel][0])}</div>`;
+  editor.querySelectorAll("[data-topic-idx]").forEach((input) => {
+    input.addEventListener("change", () => {
+      const newTopics = [...topics];
+      newTopics[Number(input.dataset.topicIdx)] = input.value;
+      updateDiscussionTopics(db, currentLevel, newTopics);
+    });
+  });
+}
+
+// ---- Gradebook overview ----
+function renderGradebook() {
+  const tbody = document.querySelector("#gradebook-table tbody");
+  tbody.innerHTML = db.gradebook
+    .map(
+      (g) => `<tr>
+        <td>${escapeHtml(g.name)}</td>
+        <td>${g.avgAI}%</td>
+        <td>${g.p10}%</td>
+        <td>${g.p90}%</td>
+        <td>${g.manualReview > 0 ? `<span class="status-badge pending">${g.manualReview} flagged</span>` : '<span class="status-badge published">clear</span>'}</td>
+      </tr>`
+    )
+    .join("");
+}
+
+// ---- Grading review (live practice activity) ----
+document.getElementById("feedback-visible-toggle").addEventListener("change", (e) => setFeedbackVisibility(db, e.target.checked));
+document.getElementById("outage-toggle").addEventListener("change", (e) => toggleAmbiguousOutage(db, e.target.checked));
+
+function renderReview() {
+  const tbody = document.querySelector("#review-table tbody");
+  const hint = document.getElementById("no-submissions-hint");
+  if (db.submissions.length === 0) {
+    hint.textContent = "";
+    tbody.innerHTML = `<tr class="placeholder-example">
+      <td><span class="placeholder-tag">Example</span>Sara Al Mansoori (attempt 1)</td>
+      <td>"At constant velocity the net force must be nonzero to keep it moving."</td>
+      <td>Identifies zero acceleration: 0/1<br/>Applies Newton's Second Law: 0/1<br/>Concludes net force is zero: 0/1<br/>Explains forces balance: 1/1</td>
+      <td>1/4</td>
+      <td>Approve / Edit / Reject</td>
+    </tr>`;
+    return;
+  }
+  hint.textContent = "";
+  tbody.innerHTML = db.submissions
+    .slice()
+    .reverse()
+    .map((s) => {
+      const evidence = db.practiceActivity.rubric.map((c) => `${c.text}: ${s.provisional.scores[c.id]}/${c.max}`).join("<br/>");
+      const decision = s.reviewed
+        ? s.reviewed.action === "rejected"
+          ? '<span class="status-badge pending">rejected — sent back</span>'
+          : `<span class="status-badge published">${s.reviewed.action} · ${s.reviewed.total}/${s.reviewed.max}</span>`
+        : `<button class="btn btn-success btn-sm" data-approve="${s.id}">Approve</button>
+           <button class="btn btn-secondary btn-sm" data-edit="${s.id}">Edit</button>
+           <button class="btn btn-danger btn-sm" data-reject="${s.id}">Reject</button>`;
+      return `<tr>
+        <td>${escapeHtml(studentName(db, s.studentId))} (attempt ${s.version})</td>
+        <td>${escapeHtml(s.answer.slice(0, 100))}${s.answer.length > 100 ? "…" : ""}</td>
+        <td>${evidence}</td>
+        <td>${s.provisional.total}/${s.provisional.max}</td>
+        <td>${decision}</td>
+      </tr>`;
+    })
+    .join("");
+
+  tbody.querySelectorAll("[data-approve]").forEach((btn) => btn.addEventListener("click", () => { reviewSubmission(db, btn.dataset.approve, "approve"); refresh(); }));
+  tbody.querySelectorAll("[data-reject]").forEach((btn) => btn.addEventListener("click", () => { reviewSubmission(db, btn.dataset.reject, "reject"); refresh(); }));
+  tbody.querySelectorAll("[data-edit]").forEach((btn) =>
+    btn.addEventListener("click", () => {
+      const sub = db.submissions.find((s) => s.id === btn.dataset.edit);
+      const edited = {};
+      let ok = true;
+      for (const c of db.practiceActivity.rubric) {
+        const v = prompt(`Score for "${c.text}" (0-${c.max})`, sub.provisional.scores[c.id]);
+        if (v === null) { ok = false; break; }
+        edited[c.id] = Math.max(0, Math.min(c.max, Number(v) || 0));
+      }
+      if (ok) { reviewSubmission(db, sub.id, "edit", edited); refresh(); }
+    })
+  );
+}
+
+// ---- Source modal ----
+function openSourceModal(kind, id) {
+  const src = getSourceById(db, kind, id);
+  document.getElementById("modal-title").textContent = kind === "slide" ? "Slide" : kind === "lecture" ? "Lecture transcript" : "Source";
+  document.getElementById("modal-body").innerHTML = src
+    ? `<div><strong>${escapeHtml(src.title || src.id)}</strong></div><p>${escapeHtml(src.text || (src.questions || []).join(" / "))}</p>`
+    : '<div class="hint">Source no longer available.</div>';
+  document.getElementById("modal-backdrop").hidden = false;
+}
+document.getElementById("modal-close").addEventListener("click", () => { document.getElementById("modal-backdrop").hidden = true; });
+
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str == null ? "" : String(str);
+  return div.innerHTML;
+}
+
+render();
+setInterval(refresh, 2000);
+</script>
+</body>
+</html>
