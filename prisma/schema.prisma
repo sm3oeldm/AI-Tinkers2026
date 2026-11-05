@@ -1,0 +1,402 @@
+// Course Companion — data model (Prisma / SQLite)
+//
+// Notes:
+// - SQLite does not support Prisma enums, so enum-like fields are strings;
+//   allowed values are documented per field and enforced in application code.
+// - Rubrics are versioned: an approved exam references immutable Rubric rows;
+//   grades record exactly which version was used (spec PART 6/roof rule 1).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  // "FACULTY" | "STUDENT"  (faculty == professor role in the product spec)
+  role         String
+  createdAt    DateTime @default(now())
+
+  sessions         Session[]
+  professorCourses Course[]       @relation("ProfessorCourses")
+  enrollments      Enrollment[]
+  approvedRubrics  Rubric[]       @relation("ApprovedRubrics")
+  submissions      ExamSubmission[] @relation("Submissions")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Course {
+  id          String  @id @default(cuid())
+  code        String  @unique
+  title       String
+  unit        String?
+  description String?
+
+  professorId String
+  professor   User    @relation("ProfessorCourses", fields: [professorId], references: [id])
+
+  chapters    Chapter[]
+  documents   Document[]
+  enrollments Enrollment[]
+  exams       Exam[]
+  lectures    Lecture[]
+  qaEntries   QaEntry[]
+  discussion  DiscussionTopics?
+  createdAt   DateTime @default(now())
+
+  @@index([professorId])
+}
+
+model Enrollment {
+  id        String   @id @default(cuid())
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([courseId, userId])
+}
+
+model Chapter {
+  id        String  @id @default(cuid())
+  courseId  String
+  course    Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title     String
+  shortId   String // stable label like "ch1" used in references
+  order     Int
+  documents Document[]
+
+  @@index([courseId])
+}
+
+/// Uploaded course file (syllabus, chapter, past exam, material).
+/// status: "PROCESSING" | "PROCESSED" | "FAILED"
+/// kind:   "SYLLABUS" | "CHAPTER" | "MATERIAL"
+model Document {
+  id            String   @id @default(cuid())
+  courseId      String
+  course        Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  chapterId     String?
+  chapter       Chapter? @relation(fields: [chapterId], references: [id])
+  kind          String
+  title         String
+  originalName  String
+  filename      String
+  mimeType      String
+  sizeBytes     Int
+  status        String   @default("PROCESSING")
+  extractionError String?
+  pageCount     Int?
+  wordCount     Int?
+  visibleToStudents Boolean @default(true)
+  createdAt     DateTime @default(now())
+  processedAt   DateTime?
+  segments      DocumentSegment[]
+
+  @@index([courseId])
+  @@index([chapterId])
+}
+
+/// A chunk of extracted document text preserving a heading/page locator
+/// (used for exam-generation context and private Q&A retrieval).
+model DocumentSegment {
+  id         String   @id @default(cuid())
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  index      Int
+  heading    String?
+  page       Int?
+  text       String
+
+  @@index([documentId])
+}
+
+model Lecture {
+  id         String   @id @default(cuid())
+  courseId   String
+  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title      String
+  dateStr    String
+  // "LIVE" | "ARCHIVED"
+  status     String
+  seq        Int      @default(0)
+  lastUpdate DateTime @default(now())
+  segments   TranscriptSegment[]
+
+  @@index([courseId])
+}
+
+model TranscriptSegment {
+  id        String   @id @default(cuid())
+  lectureId String
+  lecture   Lecture  @relation(fields: [lectureId], references: [id], onDelete: Cascade)
+  seq       Int
+  offset    String
+  text      String
+  ts        DateTime @default(now())
+
+  @@index([lectureId])
+}
+
+model QaEntry {
+  id        String   @id @default(cuid())
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  studentId String
+  lectureId String?
+  question  String
+  answer    String
+  // "SUPPORTED" | "INSUFFICIENT_EVIDENCE"
+  status    String
+  sourcesJson String
+  createdAt DateTime @default(now())
+
+  @@index([courseId, studentId])
+}
+
+/// Port of the prototype's discussion-preparation feature (single row per course).
+model DiscussionTopics {
+  id              String  @id @default(cuid())
+  courseId        String  @unique
+  course          Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  // "NONE" | "DRAFT" | "PUBLISHED"
+  status          String  @default("NONE")
+  topicsJson      String // { broad: string[], recommended: string[], narrow: string[] }
+  publishedLevelsJson String @default("[]")
+  updatedAt       DateTime @updatedAt
+}
+
+/// status: "GENERATING" | "DRAFT" | "APPROVED" | "PUBLISHED" | "ARCHIVED"
+model Exam {
+  id              String  @id @default(cuid())
+  courseId        String
+  course          Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title           String
+  description     String?
+  instructions    String?
+  durationMinutes Int
+  status          String  @default("DRAFT")
+  // target difficulty mix hint, e.g. "mixed" | "easy" | "medium" | "hard"
+  difficulty      String?
+  isAiGenerated   Boolean @default(false)
+  /// JSON: { provider, model, promptVersions, generatedWithKeyConfigured,
+  ///        sourceDocIds, warnings[], config }
+  generationMeta  String?
+  generatedById   String?
+  approvedById    String?
+  approvedAt      DateTime?
+  publishedAt     DateTime?
+  createdAt       DateTime @default(now())
+
+  questions   ExamQuestion[]
+  submissions ExamSubmission[]
+
+  @@index([courseId])
+}
+
+/// type: "MCQ" | "WRITING"
+model ExamQuestion {
+  id              String  @id @default(cuid())
+  examId          String
+  exam            Exam    @relation(fields: [examId], references: [id], onDelete: Cascade)
+  order           Int
+  type            String
+  text            String
+  marks           Float
+  /// JSON [{ id: "A", text: "..." }] for MCQ
+  optionsJson     String?
+  /// correct option id for MCQ
+  correctAnswerId String?
+  explanation     String?
+  expectedAnswer  String?
+  /// JSON [{ kind: "document", documentId, chapterShortId?, label, page? }]
+  sourceRefsJson  String?
+  // "easy" | "medium" | "hard"
+  difficulty      String?
+  /// true when draft rubric criteria don't sum to marks (professor must fix)
+  needsRubricFix  Boolean @default(false)
+  createdAt       DateTime @default(now())
+
+  rubricVersions Rubric[]
+  answers        Answer[]
+  grades         WritingQuestionGrade[]
+
+  @@index([examId])
+}
+
+/// Immutable rubric versions; the approved version is the authoritative
+/// grading specification. status: "DRAFT" | "APPROVED"
+model Rubric {
+  id           String    @id @default(cuid())
+  questionId   String
+  question     ExamQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  version      Int
+  status       String    @default("DRAFT")
+  approvedById String?
+  approvedBy   User?     @relation("ApprovedRubrics", fields: [approvedById], references: [id])
+  createdAt    DateTime  @default(now())
+  approvedAt   DateTime?
+
+  criteria RubricCriterion[]
+  grades   WritingQuestionGrade[]
+
+  @@unique([questionId, version])
+  @@index([questionId])
+}
+
+model RubricCriterion {
+  id         String @id @default(cuid())
+  rubricId   String
+  rubric     Rubric @relation(fields: [rubricId], references: [id], onDelete: Cascade)
+  order      Int
+  name       String
+  description String
+  maxMarks   Float
+  /// what a student must show for full marks
+  fullCredit  String
+  /// guidance for awarding partial credit
+  partialCredit String
+  commonMistakes String?
+  acceptableAlternatives String?
+
+  @@index([rubricId])
+}
+
+/// status: "IN_PROGRESS" | "SUBMITTED" | "GRADING" | "GRADING_FAILED"
+///         | "PROVISIONAL" | "APPROVED" | "PUBLISHED"
+model ExamSubmission {
+  id          String  @id @default(cuid())
+  examId      String
+  exam        Exam    @relation(fields: [examId], references: [id], onDelete: Cascade)
+  studentId   String
+  student     User    @relation("Submissions", fields: [studentId], references: [id])
+  status      String  @default("IN_PROGRESS")
+  maxMarks    Float
+  startedAt   DateTime @default(now())
+  submittedAt DateTime?
+  mcqMarks    Float?
+  writingMarks Float?
+  totalMarks  Float?
+  releasedAt  DateTime?
+
+  answers        Answer[]
+  writingGrades  WritingQuestionGrade[]
+  audits         GradeAudit[]
+
+  @@unique([examId, studentId])
+  @@index([studentId])
+}
+
+model Answer {
+  id               String  @id @default(cuid())
+  submissionId     String
+  submission       ExamSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  questionId       String
+  question         ExamQuestion   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  selectedOptionId String?
+  text             String?
+  awardedMarks     Float?
+  // "MCQ_KEY" | "AI" | "PROFESSOR"
+  gradedBy         String?
+  updatedAt        DateTime @updatedAt
+
+  @@unique([submissionId, questionId])
+}
+
+/// AI grading result for one writing answer (one row per attempt;
+/// regrading creates a new attempt row — history is never overwritten).
+/// status: "SUCCEEDED" | "VALIDATION_FAILED" | "REQUIRES_REVIEW" | "FAILED"
+model WritingQuestionGrade {
+  id             String  @id @default(cuid())
+  submissionId   String
+  submission     ExamSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  questionId     String
+  question       ExamQuestion   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  rubricId       String
+  rubric         Rubric  @relation(fields: [rubricId], references: [id])
+  rubricVersion  Int
+  attempt        Int
+  status         String
+  awardedMarks   Float
+  maxMarks       Float
+  feedback       String?
+  /// JSON [{ issue }] — e.g. evidence not found in the student answer
+  evidenceIssuesJson String?
+  /// JSON [string] — reasons flagged for professor review
+  reviewReasonsJson  String?
+  model          String
+  promptVersion  String
+  rawResponseJson String?
+  createdAt      DateTime @default(now())
+
+  criteria CriterionGrade[]
+
+  @@index([submissionId, questionId])
+}
+
+model CriterionGrade {
+  id             String  @id @default(cuid())
+  gradeId        String
+  grade          WritingQuestionGrade @relation(fields: [gradeId], references: [id], onDelete: Cascade)
+  order          Int
+  criterionId    String
+  criterionName  String
+  maxMarks       Float
+  awardedMarks   Float
+  /// JSON [{ quote, explanation, verified }]
+  evidenceJson   String
+  feedback       String
+  flagged        Boolean @default(false)
+  flagReasonsJson String?
+
+  @@index([gradeId])
+}
+
+/// Append-only audit trail. action: "GRADED" | "PROFESSOR_OVERRIDE"
+/// | "PROFESSOR_APPROVE" | "RELEASED" | "REGRADE"  (previous/new snapshots JSON)
+model GradeAudit {
+  id           String   @id @default(cuid())
+  submissionId String
+  submission   ExamSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  questionId   String?
+  action       String
+  actorId      String?
+  previousJson String?
+  newJson      String?
+  reason       String?
+  createdAt    DateTime @default(now())
+
+  @@index([submissionId])
+}
+
+/// Prototype port: evidence-based learning-gap observations
+/// (state: "needs-practice-provisional" | "recurring-gap")
+model ConceptObservation {
+  id            String   @id @default(cuid())
+  courseId      String
+  studentId     String
+  conceptId     String
+  label         String
+  evidenceState String
+  submissionId  String?
+  createdAt     DateTime @default(now())
+
+  @@index([studentId])
+}

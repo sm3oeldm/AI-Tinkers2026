@@ -1,0 +1,10 @@
+node_modules/
+.next/
+coverage/
+data/*.db
+data/*.db-journal
+data/uploads/
+data/test-uploads/
+.env
+*.tsbuildinfo
+next-env.d.ts

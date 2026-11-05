@@ -1,0 +1,40 @@
+{
+  "name": "course-companion-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Course Companion — university platform with AI exam generation (gemma-4-31b-it) and rubric-locked automatic grading, built on the AAU Moodle shell.",
+  "scripts": {
+    "dev": "node server.js",
+    "build": "next build",
+    "start": "cross-env NODE_ENV=production node server.js",
+    "typecheck": "tsc --noEmit",
+    "db:push": "prisma db push",
+    "db:seed": "tsx prisma/seed.ts",
+    "setup": "prisma db push && tsx prisma/seed.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.10.0",
+    "bcryptjs": "^2.4.3",
+    "mammoth": "^1.9.0",
+    "next": "^15.5.29",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "unpdf": "^2.1.0",
+    "ws": "^8.18.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^22.10.10",
+    "@types/react": "^19.0.8",
+    "@types/react-dom": "^19.0.3",
+    "@types/ws": "^8.5.14",
+    "cross-env": "^7.0.3",
+    "prisma": "^6.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5"
+  }
+}
